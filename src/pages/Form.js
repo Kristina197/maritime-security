@@ -38,7 +38,7 @@ const Form = ({ user }) => {
       severity: severityRef.current.value,
       date: dateRef.current.value,
     };
-    axios.post('http://localhost:5000/vessels', JSON.stringify(newVessel), {
+    axios.post('/vessels', JSON.stringify(newVessel), {
       headers: { 'Content-Type': 'application/json' }
     })
       .then(() => navigate('/'))

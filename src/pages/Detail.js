@@ -26,7 +26,7 @@ const Detail = ({ user }) => {
   const dateRef = useRef(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/vessels/${id}`)
+    axios.get(`/vessels/${id}`)
       .then(response => {
         const v = response.data;
         if (nameRef.current) nameRef.current.value = v.name;
@@ -51,7 +51,7 @@ const Detail = ({ user }) => {
       severity: severityRef.current.value,
       date: dateRef.current.value,
     };
-    axios.put(`http://localhost:5000/vessels/${id}`, JSON.stringify(updatedVessel), {
+    axios.put(`/vessels/${id}`, JSON.stringify(updatedVessel), {
       headers: { 'Content-Type': 'application/json' }
     })
       .then(() => { alert('Данные обновлены!'); navigate('/'); })

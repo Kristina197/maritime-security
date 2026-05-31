@@ -4,16 +4,21 @@ import Home from './pages/Home';
 import Detail from './pages/Detail';
 import Form from './pages/Form';
 import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [showRegister, setShowRegister] = useState(false);
 
   const handleLogout = () => {
     setCurrentUser(null);
-  }
+  };
 
   if (!currentUser) {
-    return <Login onLogin={setCurrentUser} />;
+    if (showRegister) {
+      return <Register onBack={() => setShowRegister(false)} />;
+    }
+    return <Login onLogin={setCurrentUser} onRegister={() => setShowRegister(true)} />;
   }
 
   let roleLabel = '';
@@ -30,7 +35,7 @@ function App() {
           <Link to="/add" style={{ color: '#90caf9' }}>Добавить судно</Link>
         )}
         <span style={{ marginLeft: 'auto', color: '#90caf9', fontSize: '13px' }}>
-          {roleLabel} — {currentUser.username}
+          {roleLabel} — {currentUser.username || currentUser.email}
         </span>
         <button
           onClick={handleLogout}

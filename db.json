@@ -7,48 +7,48 @@
       "route": "Новороссийск — Сочи",
       "incident": "Нет",
       "severity": "none",
-      "date": "2025-01-15",
+      "date": "2026-01-15",
       "id": "1"
     },
     {
-      "id": "2",
       "name": "Волга-Флот 7",
       "type": "Речная баржа",
       "status": "Под наблюдением",
       "route": "Самара — Астрахань",
       "incident": "Утечка топлива",
       "severity": "medium",
-      "date": "2025-03-22"
+      "date": "2026-03-22",
+      "id": "2"
     },
     {
-      "id": "3",
       "name": "Енисей-М",
       "type": "Танкер",
       "status": "Задержан",
       "route": "Красноярск — Дудинка",
       "incident": "Нарушение правил перевозки",
       "severity": "high",
-      "date": "2025-05-10"
+      "date": "2026-05-10",
+      "id": "3"
     },
     {
-      "id": "4",
       "name": "Север-2",
       "type": "Грузовой сухогруз",
       "status": "Активен",
       "route": "Мурманск — Архангельск",
       "incident": "Нет",
       "severity": "none",
-      "date": "2025-07-04"
+      "date": "2026-07-04",
+      "id": "4"
     },
     {
-      "id": "5",
       "name": "Каспий-3",
       "type": "Танкер",
       "status": "Задержан",
       "route": "Астрахань — Баку",
       "incident": "Пожар на борту",
       "severity": "critical",
-      "date": "2025-09-01"
+      "date": "2026-09-01",
+      "id": "5"
     },
     {
       "name": "Волга-3",
@@ -57,7 +57,7 @@
       "route": "Мурманск - Архангельск",
       "incident": "Столкновение",
       "severity": "medium",
-      "date": "2025-06-04",
+      "date": "2026-06-04",
       "id": "bIr4KSWhzdk"
     }
   ],
@@ -65,20 +65,32 @@
     {
       "id": "1",
       "username": "admin",
-      "password": "admin123",
+      "email": "admin@maritime.ru",
+      "password": "$2b$10$bGIbdJEZqI1EawOlqTa4a.7kBXRaqZ6OgEEJWaDa8FCHBM11uRp1y",
       "role": "admin"
     },
     {
       "id": "2",
       "username": "operator",
-      "password": "oper123",
+      "email": "operator@maritime.ru",
+      "password": "$2b$10$MWTS2dXY4mauuubND0CeLuQsWErAkeibw7QKtCU6AKfxSHBIVjSnq",
       "role": "operator"
     },
     {
       "id": "3",
       "username": "viewer",
-      "password": "view123",
+      "email": "viewer@maritime.ru",
+      "password": "$2b$10$UsUjelq7W1oRdqHHpD8v0eOO.LqXiERHTo3WUYoWzl28r.mAMTKU2",
       "role": "viewer"
+    },
+    {
+      "id": "1780256184559",
+      "username": "Kris",
+      "email": "butkris06@gmail.com",
+      "password": "$2b$10$hCrn7bG4YUmCjoWRKkmSpuxJGkxqxSJYwZ/uaxRhDNPneS4uJaKW2",
+      "role": "operator",
+      "verified": true,
+      "createdAt": "2026-05-31T19:36:24.559Z"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
