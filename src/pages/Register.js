@@ -1,47 +1,42 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const passwordRules = [
-  { test: p => p.length >= 8, label: 'Минимум 8 символов' },
-  { test: p => /[A-Z]/.test(p), label: 'Хотя бы одна заглавная буква' },
-  { test: p => /[0-9]/.test(p), label: 'Хотя бы одна цифра' },
-  { test: p => /[!@#$%^&*()_+\-=\[\]{};:,.<>?]/.test(p), label: 'Хотя бы один спецсимвол (!@#$%^&*)' },
+  { test: (v) => v.length >= 8, label: 'Минимум 8 символов' },
+  { test: (v) => /[A-ZА-Я]/.test(v), label: 'Хотя бы одна заглавная буква' },
+  { test: (v) => /[a-zа-я]/.test(v), label: 'Хотя бы одна строчная буква' },
+  { test: (v) => /[0-9]/.test(v), label: 'Хотя бы одна цифра' },
+  { test: (v) => /[^A-Za-zА-Яа-я0-9]/.test(v), label: 'Хотя бы один спецсимвол' },
 ];
 
-const s = {
-  wrap: { minHeight: '100vh', background: '#0d1f35', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  card: { background: '#fff', padding: '40px', borderRadius: '12px', width: '360px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' },
-  title: { textAlign: 'center', marginBottom: '8px', color: '#1a3a5c' },
-  sub: { textAlign: 'center', color: '#666', marginBottom: '24px', fontSize: '13px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '14px' },
-  label: { fontSize: '13px', color: '#555', display: 'block', marginBottom: '4px' },
-  input: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' },
-  btn: { padding: '11px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '15px', cursor: 'pointer' },
-  btnBack: { padding: '10px', background: 'transparent', color: '#1a3a5c', border: '1px solid #1a3a5c', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' },
-  error: { color: '#c0392b', fontSize: '13px', margin: 0 },
-  codeInput: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '28px', boxSizing: 'border-box', letterSpacing: '10px', textAlign: 'center', fontWeight: 'bold' },
-  ruleOk: { color: '#27ae60', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
-  ruleBad: { color: '#aaa', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
-};
-
-const Register = ({ onBack }) => {
-  const [step, setStep] = useState(1);
+function Register({ onBack }) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
+  const [step, setStep] = useState(1);
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const allRulesPass = passwordRules.every(r => r.test(password));
+  const allRulesPass = passwordRules.every((r) => r.test(password));
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    if (!allRulesPass) return setError('Пароль не соответствует требованиям');
+    setMessage('');
     setLoading(true);
+
     try {
-      await axios.post('/auth/register', { username, email, password });
+      const res = await axios.post(`${API}/auth/register`, {
+        username,
+        email,
+        password,
+      });
+
+      setMessage(res.data.message);
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.error || 'Ошибка регистрации');
@@ -53,74 +48,186 @@ const Register = ({ onBack }) => {
   const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
+
     try {
-      await axios.post('/auth/verify', { email, code });
-      alert('✅ Регистрация успешна! Войдите с вашим email и паролем.');
-      onBack();
+      const res = await axios.post(`${API}/auth/verify`, { email, code });
+      setMessage(res.data.message);
+      setTimeout(() => {
+        onBack();
+      }, 1500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Неверный код');
+      setError(err.response?.data?.error || 'Ошибка подтверждения');
     } finally {
       setLoading(false);
     }
   };
 
+  const s = {
+    wrap: {
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0d1b2a, #1b263b)',
+      padding: '20px'
+    },
+    card: {
+      width: '100%',
+      maxWidth: '460px',
+      background: '#fff',
+      padding: '32px',
+      borderRadius: '16px',
+      boxShadow: '0 12px 40px rgba(0,0,0,0.25)'
+    },
+    title: {
+      margin: '0 0 10px',
+      color: '#1a3a5c',
+      textAlign: 'center'
+    },
+    subtitle: {
+      margin: '0 0 24px',
+      textAlign: 'center',
+      color: '#4b5d73',
+      fontSize: '14px'
+    },
+    input: {
+      width: '100%',
+      padding: '12px 14px',
+      marginBottom: '14px',
+      border: '1px solid #cfd8dc',
+      borderRadius: '10px',
+      fontSize: '14px',
+      boxSizing: 'border-box'
+    },
+    button: {
+      width: '100%',
+      padding: '12px 14px',
+      background: '#1a3a5c',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '15px',
+      cursor: 'pointer'
+    },
+    backBtn: {
+      width: '100%',
+      marginTop: '12px',
+      padding: '12px 14px',
+      background: '#eef4fb',
+      color: '#1a3a5c',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '15px',
+      cursor: 'pointer'
+    },
+    error: {
+      marginBottom: '14px',
+      color: '#c62828',
+      background: '#ffebee',
+      padding: '10px 12px',
+      borderRadius: '8px',
+      fontSize: '14px'
+    },
+    ok: {
+      marginBottom: '14px',
+      color: '#2e7d32',
+      background: '#e8f5e9',
+      padding: '10px 12px',
+      borderRadius: '8px',
+      fontSize: '14px'
+    },
+    rules: {
+      marginBottom: '14px',
+      fontSize: '13px',
+      color: '#455a64'
+    },
+    ruleOk: {
+      display: 'block',
+      color: '#2e7d32',
+      marginBottom: '4px'
+    },
+    ruleBad: {
+      display: 'block',
+      color: '#607d8b',
+      marginBottom: '4px'
+    }
+  };
+
   return (
     <div style={s.wrap}>
-      <div style={s.card}>
-        <h2 style={s.title}>⚓ Регистрация</h2>
-        <p style={s.sub}>Безопасность водного транспорта</p>
+      <form onSubmit={step === 1 ? handleRegister : handleVerify} style={s.card}>
+        <h2 style={s.title}>Регистрация</h2>
+        <p style={s.subtitle}>Создание учётной записи</p>
+
+        {error && <div style={s.error}>{error}</div>}
+        {message && <div style={s.ok}>{message}</div>}
 
         {step === 1 ? (
-          <form onSubmit={handleRegister} style={s.form}>
-            <div>
-              <label style={s.label}>Логин</label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-                required placeholder="Придумайте логин" style={s.input} />
+          <>
+            <input
+              type="text"
+              placeholder="Введите логин"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={s.input}
+              required
+            />
+
+            <input
+              type="email"
+              placeholder="Введите email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={s.input}
+              required
+            />
+
+            <input
+              type="password"
+              placeholder="Введите пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={s.input}
+              required
+            />
+
+            <div style={s.rules}>
+              {passwordRules.map((rule, i) => (
+                <span key={i} style={rule.test(password) ? s.ruleOk : s.ruleBad}>
+                  {rule.test(password) ? '✅' : '○'} {rule.label}
+                </span>
+              ))}
             </div>
-            <div>
-              <label style={s.label}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                required placeholder="your@email.com" style={s.input} />
-            </div>
-            <div>
-              <label style={s.label}>Пароль</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                required placeholder="Придумайте пароль" style={s.input} />
-              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                {passwordRules.map((rule, i) => (
-                  <span key={i} style={rule.test(password) ? s.ruleOk : s.ruleBad}>
-                    {rule.test(password) ? '✅' : '○'} {rule.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {error && <p style={s.error}>⚠️ {error}</p>}
-            <button type="submit" style={{ ...s.btn, opacity: allRulesPass ? 1 : 0.6 }} disabled={loading}>
-              {loading ? 'Отправка...' : 'Зарегистрироваться'}
+
+            <button type="submit" style={s.button} disabled={!allRulesPass || loading}>
+              {loading ? 'Отправка...' : 'Получить код подтверждения'}
             </button>
-            <button type="button" style={s.btnBack} onClick={onBack}>← Назад к входу</button>
-          </form>
+          </>
         ) : (
-          <form onSubmit={handleVerify} style={s.form}>
-            <p style={{ fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-              На <strong>{email}</strong> отправлен 6-значный код. Введите его ниже:
-            </p>
-            <div>
-              <label style={s.label}>Код подтверждения</label>
-              <input type="text" value={code} onChange={e => setCode(e.target.value)}
-                required maxLength={6} placeholder="______" style={s.codeInput} />
-            </div>
-            {error && <p style={s.error}>⚠️ {error}</p>}
-            <button type="submit" style={s.btn} disabled={loading}>
-              {loading ? 'Проверка...' : 'Подтвердить'}
+          <>
+            <input
+              type="text"
+              placeholder="Введите код из email"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              style={s.input}
+              required
+            />
+
+            <button type="submit" style={s.button} disabled={loading}>
+              {loading ? 'Проверка...' : 'Подтвердить регистрацию'}
             </button>
-            <button type="button" style={s.btnBack} onClick={() => { setStep(1); setError(''); }}>← Назад</button>
-          </form>
+          </>
         )}
-      </div>
+
+        <button type="button" style={s.backBtn} onClick={onBack}>
+          Назад ко входу
+        </button>
+      </form>
     </div>
   );
-};
+}
 
 export default Register;

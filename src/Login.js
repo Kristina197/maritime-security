@@ -1,72 +1,133 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
-const Login = ({ onLogin, onRegister }) => {
-  const usernameRef = useRef(null);
-  const passwordRef = useRef(null);
-  const [errorMsg, setErrorMsg] = useState('');
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  const handleSubmit = (e) => {
+function Login({ onLogin, onRegister }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg('');
+    setError('');
+    setLoading(true);
 
-    axios.get('/users')
-      .then(res => {
-        const found = res.data.find(
-          u => u.username === usernameRef.current.value
-            && u.password === passwordRef.current.value
-        );
-        if (found) {
-          onLogin(found);
-        } else {
-          setErrorMsg('Неверный логин или пароль');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        setErrorMsg('Ошибка подключения к серверу');
-      });
+    try {
+      const res = await axios.post(`${API}/auth/login`, { email, password });
+      onLogin(res.data.user);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Ошибка входа');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const s = {
+    wrap: {
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0d1b2a, #1b263b)',
+      padding: '20px'
+    },
+    card: {
+      width: '100%',
+      maxWidth: '420px',
+      background: '#fff',
+      padding: '32px',
+      borderRadius: '16px',
+      boxShadow: '0 12px 40px rgba(0,0,0,0.25)'
+    },
+    title: {
+      margin: '0 0 10px',
+      color: '#1a3a5c',
+      textAlign: 'center'
+    },
+    subtitle: {
+      margin: '0 0 24px',
+      textAlign: 'center',
+      color: '#4b5d73',
+      fontSize: '14px'
+    },
+    input: {
+      width: '100%',
+      padding: '12px 14px',
+      marginBottom: '14px',
+      border: '1px solid #cfd8dc',
+      borderRadius: '10px',
+      fontSize: '14px',
+      boxSizing: 'border-box'
+    },
+    button: {
+      width: '100%',
+      padding: '12px 14px',
+      background: '#1a3a5c',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '15px',
+      cursor: 'pointer'
+    },
+    linkBtn: {
+      width: '100%',
+      marginTop: '12px',
+      padding: '12px 14px',
+      background: '#eef4fb',
+      color: '#1a3a5c',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '15px',
+      cursor: 'pointer'
+    },
+    error: {
+      marginBottom: '14px',
+      color: '#c62828',
+      background: '#ffebee',
+      padding: '10px 12px',
+      borderRadius: '8px',
+      fontSize: '14px'
+    }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0d1f35', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', padding: '40px', borderRadius: '12px', width: '340px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '8px', color: '#1a3a5c' }}>⚓ Вход в систему</h2>
-        <p style={{ textAlign: 'center', color: '#666', marginBottom: '24px', fontSize: '13px' }}>
-          Безопасность водного транспорта
-        </p>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div>
-            <label style={{ fontSize: '13px', color: '#555', display: 'block', marginBottom: '4px' }}>Логин</label>
-            <input ref={usernameRef} type="text" required placeholder="Введите логин"
-              style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
-          </div>
-          <div>
-            <label style={{ fontSize: '13px', color: '#555', display: 'block', marginBottom: '4px' }}>Пароль</label>
-            <input ref={passwordRef} type="password" required placeholder="Введите пароль"
-              style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }} />
-          </div>
-          {errorMsg && (
-            <p style={{ color: '#c0392b', fontSize: '13px', margin: 0 }}>⚠️ {errorMsg}</p>
-          )}
-          <button type="submit"
-            style={{ padding: '11px', background: '#1a3a5c', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '15px', cursor: 'pointer', marginTop: '4px' }}>
-            Войти
-          </button>
-          <button type="button" onClick={onRegister}
-            style={{ padding: '11px', background: 'transparent', color: '#1a3a5c', border: '1px solid #1a3a5c', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }}>
-            Зарегистрироваться
-          </button>
-        </form>
-        <div style={{ marginTop: '20px', background: '#f0f4f8', borderRadius: '8px', padding: '12px', fontSize: '12px', color: '#555', lineHeight: '1.8' }}>
-          <b style={{ color: '#1a3a5c' }}>Данные для входа:</b><br />
-          👑 admin / admin123<br />
-          🔧 operator / oper123<br />
-          👁 viewer / view123
-        </div>
-      </div>
+    <div style={s.wrap}>
+      <form onSubmit={handleSubmit} style={s.card}>
+        <h2 style={s.title}>Вход</h2>
+        <p style={s.subtitle}>Система безопасности водного транспорта</p>
+
+        {error && <div style={s.error}>{error}</div>}
+
+        <input
+          type="email"
+          placeholder="Введите email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={s.input}
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Введите пароль"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={s.input}
+          required
+        />
+
+        <button type="submit" style={s.button} disabled={loading}>
+          {loading ? 'Вход...' : 'Войти'}
+        </button>
+
+        <button type="button" style={s.linkBtn} onClick={onRegister}>
+          Зарегистрироваться
+        </button>
+      </form>
     </div>
   );
-};
+}
 
 export default Login;

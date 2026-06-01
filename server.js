@@ -1,30 +1,50 @@
+require('dotenv').config();
+
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'build')));
 
+const PORT = process.env.PORT || 5000;
 const DB_PATH = path.join(__dirname, 'db.json');
+const BUILD_PATH = path.join(__dirname, 'build');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const MAIL_USER = process.env.MAIL_USER;
+const MAIL_PASS = process.env.MAIL_PASS;
+
 const pendingVerifications = {};
+
+app.use(cors({
+  origin: [FRONTEND_URL, 'http://localhost:3000'],
+  credentials: false
+}));
+
+app.use(express.json());
+
+if (fs.existsSync(BUILD_PATH)) {
+  app.use(express.static(BUILD_PATH));
+}
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'butkris06@gmail.com',
-    pass: 'ghtppqycfrffkotp',
+    user: MAIL_USER,
+    pass: MAIL_PASS,
   },
 });
 
 function readDB() {
+  if (!fs.existsSync(DB_PATH)) {
+    return { users: [], vessels: [] };
+  }
+
   const raw = fs.readFileSync(DB_PATH, 'utf-8');
-  return JSON.parse(raw);
+  return JSON.parse(raw || '{"users":[],"vessels":[]}');
 }
 
 function writeDB(data) {
@@ -34,6 +54,10 @@ function writeDB(data) {
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 app.post('/auth/register', async (req, res) => {
   try {
@@ -54,12 +78,22 @@ app.post('/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Логин уже занят' });
     }
 
+    if (!MAIL_USER || !MAIL_PASS) {
+      return res.status(500).json({ error: 'Почтовый сервис не настроен' });
+    }
+
     const code = generateCode();
     const expires = Date.now() + 10 * 60 * 1000;
-    pendingVerifications[email] = { code, password, username, expires };
+
+    pendingVerifications[email] = {
+      code,
+      password,
+      username,
+      expires,
+    };
 
     await transporter.sendMail({
-      from: 'Maritime Security <butkris06@gmail.com>',
+      from: `Maritime Security <${MAIL_USER}>`,
       to: email,
       subject: 'Код подтверждения регистрации',
       html: `
@@ -71,7 +105,7 @@ app.post('/auth/register', async (req, res) => {
 
     res.json({ message: 'Код подтверждения отправлен на email' });
   } catch (e) {
-    console.error(e);
+    console.error('REGISTER ERROR:', e);
     res.status(500).json({ error: 'Ошибка при регистрации' });
   }
 });
@@ -110,17 +144,18 @@ app.post('/auth/verify', async (req, res) => {
     writeDB(db);
 
     delete pendingVerifications[email];
+
     res.json({
       message: 'Регистрация успешна',
       user: {
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
-        role: newUser.role
-      }
+        role: newUser.role,
+      },
     });
   } catch (e) {
-    console.error(e);
+    console.error('VERIFY ERROR:', e);
     res.status(500).json({ error: 'Ошибка подтверждения' });
   }
 });
@@ -142,11 +177,11 @@ app.post('/auth/login', (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
   } catch (e) {
-    console.error(e);
+    console.error('LOGIN ERROR:', e);
     res.status(500).json({ error: 'Ошибка входа' });
   }
 });
@@ -159,27 +194,38 @@ app.get('/vessels', (req, res) => {
 app.get('/vessels/:id', (req, res) => {
   const db = readDB();
   const vessel = (db.vessels || []).find(v => String(v.id) === String(req.params.id));
-  if (!vessel) return res.status(404).json({ error: 'Судно не найдено' });
+
+  if (!vessel) {
+    return res.status(404).json({ error: 'Судно не найдено' });
+  }
+
   res.json(vessel);
 });
 
 app.post('/vessels', (req, res) => {
   const db = readDB();
   const vessels = db.vessels || [];
+
   const newVessel = {
     ...req.body,
-    id: String(vessels.length ? Math.max(...vessels.map(v => Number(v.id) || 0)) + 1 : 1)
+    id: String(vessels.length ? Math.max(...vessels.map(v => Number(v.id) || 0)) + 1 : 1),
   };
+
   db.vessels = [...vessels, newVessel];
   writeDB(db);
+
   res.status(201).json(newVessel);
 });
 
 app.put('/vessels/:id', (req, res) => {
   const db = readDB();
+
   db.vessels = (db.vessels || []).map(v =>
-    String(v.id) === String(req.params.id) ? { ...req.body, id: v.id } : v
+    String(v.id) === String(req.params.id)
+      ? { ...req.body, id: v.id }
+      : v
   );
+
   writeDB(db);
   res.json({ message: 'Судно обновлено' });
 });
@@ -199,9 +245,11 @@ app.get('/users', (req, res) => {
 app.patch('/users/:id', (req, res) => {
   const { role } = req.body;
   const db = readDB();
+
   db.users = (db.users || []).map(u =>
     String(u.id) === String(req.params.id) ? { ...u, role } : u
   );
+
   writeDB(db);
   res.json({ message: 'Роль обновлена' });
 });
@@ -214,10 +262,13 @@ app.delete('/users/:id', (req, res) => {
 });
 
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  if (fs.existsSync(path.join(BUILD_PATH, 'index.html'))) {
+    return res.sendFile(path.join(BUILD_PATH, 'index.html'));
+  }
+
+  res.status(404).json({ error: 'Not Found' });
 });
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
